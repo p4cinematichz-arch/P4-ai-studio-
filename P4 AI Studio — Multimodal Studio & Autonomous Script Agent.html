@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>P4 AI Studio — Multimodal Studio & Autonomous Script Agent</title>
+  <style>
+    :root {
+      --bg-base: #090b10;
+      --bg-surface: #12151f;
+      --bg-elevated: #1a1e2d;
+      --bg-glass: rgba(26, 30, 45, 0.82);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(99, 102, 241, 0.55);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --accent-primary: #6366f1;
+      --accent-secondary: #8b5cf6;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --grad-brand: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+      --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Header */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--grad-brand);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: 0.95rem;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.45);
+    }
+
+    .badge-pro {
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: rgba(99, 102, 241, 0.18);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .credit-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 11px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .credit-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+    }
+
+    .btn-icon {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 7px 11px;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--border-focus);
+      background: rgba(99, 102, 241, 0.12);
+    }
+
+    /* Layout Container */
+    .app-shell {
+      display: flex;
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    /* Sidebar Navigation (Desktop) & Bottom Bar (Mobile) */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: rgba(14, 17, 26, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .nav-item {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 4px;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+    }
+
+    .nav-item.active {
+      color: #fff;
+    }
+
+    .nav-item.active .nav-icon-wrap {
+      background: var(--grad-brand);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .nav-icon-wrap {
+      width: 34px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      transition: all 0.2s ease;
+    }
+
+    @media (min-width: 900px) {
+      .app-shell {
+        padding-bottom: 24px;
+      }
+      .nav-bar {
+        position: sticky;
+        top: 57px;
+        height: calc(100vh - 57px);
+        width: 230px;
+        flex-direction: column;
+        justify-content: flex-start;
+        border-top: none;
+        border-right: 1px solid var(--border-subtle);
+        padding: 16px 12px;
+        gap: 6px;
+      }
+      .nav-item {
+        flex: 0;
+        flex-direction: row;
+        font-size: 0.88rem;
+        padding: 10px 12px;
+        gap: 10px;
+        justify-content: flex-start;
+        border-radius: var(--radius-md);
+      }
+      .nav-item.active {
+        background: rgba(99, 102, 241, 0.14);
+        border: 1px solid rgba(99, 102, 241, 0.35);
+      }
+      .nav-icon-wrap {
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    /* Main Content Area */
+    .main-view {
+      flex: 1;
+      padding: 16px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .main-view {
+        padding: 24px 28px;
+      }
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.22s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Section Headers */
+    .section-head {
+      margin-bottom: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .section-sub {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      margin-top: 2px;
+    }
+
+    /* Studio Grid */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    @media (min-width: 1024px) {
+      .studio-grid {
+        grid-template-columns: 1.05fr 1fr;
+        align-items: start;
+      }
+    }
+
+    /* Cards & Controls */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sub-tabs for Media Type (Video, Image, Audio, Music) */
+    .media-switcher {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      background: var(--bg-base);
+      padding: 5px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 16px;
+    }
+
+    .media-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 9px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+
+    .media-btn.active {
+      background: var(--bg-elevated);
+      color: #fff;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .link-action {
+      color: #818cf8;
+      background: none;
+      border: none;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .link-action:hover {
+      text-decoration: underline;
+    }
+
+    textarea, input[type="text"], input[type="password"], select {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      padding: 11px 13px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.18s ease;
+    }
+
+    textarea:focus, input:focus, select:focus {
+      border-color: var(--accent-primary);
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 6px 11px;
+      border-radius: var(--radius-full);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chip.active, .chip:hover {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: var(--accent-primary);
+      color: #fff;
+    }
+
+    .param-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--grad-brand);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.94rem;
+      padding: 13px 18px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.38);
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 0.82rem;
+      padding: 8px 13px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-focus);
+    }
+
+    /* Preview Canvas Container */
+    .preview-stage {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #05070b;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .preview-stage canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .stage-overlay {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(9, 11, 16, 0.78);
+      backdrop-filter: blur(8px);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+    }
+
+    /* Prompt Assistant Chat */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 210px);
+      min-height: 440px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+    }
+
+    .msg {
+      max-width: 88%;
+      padding: 11px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: rgba(99, 102, 241, 0.22);
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      color: #fff;
+    }
+
+    .prompt-box-result {
+      margin-top: 8px;
+      padding: 10px;
+      background: var(--bg-base);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: var(--radius-sm);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.8rem;
+      color: #a5f3fc;
+    }
+
+    .prompt-box-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chat-input-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Autonomous Agent Pipeline */
+    .agent-pipeline-steps {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .agent-pipeline-steps {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .step-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.25s ease;
+    }
+
+    .step-card.running {
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+    .step-card.done {
+      border-color: var(--accent-emerald);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .step-status {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .step-card.running .step-status { color: var(--accent-cyan); }
+    .step-card.done .step-status { color: var(--accent-emerald); }
+
+    .scene-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .scene-item {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .scene-item {
+        grid-template-columns: 180px 1fr;
+      }
+    }
+
+    .scene-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #05070b;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    .scene-thumb canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .scene-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.82rem;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      max-width: 500px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: var(--shadow-card);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .history-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">P4</div>
+      <span>P4 AI Studio</span>
+      <span class="badge-pro">Pro OS</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="credit-pill" title="Available Generation Credits">
+        <span class="credit-dot"></span>
+        <span id="creditCount">2,450</span> Cr
+      </div>
+      <button class="btn-icon" onclick="toggleApiModal(true)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+        </svg>
+        <span>API Keys</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <!-- Responsive Navigation (Bottom Bar on Phone, Left Sidebar on Desktop) -->
+    <nav class="nav-bar">
+      <button class="nav-item active" onclick="switchTab('studio', this)">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+        <span>P4 Studio</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('agent', this)">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a4 4 0 0 1 4 4v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2V6a4 4 0 0 1 4-4Z"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg>
+        </div>
+        <span>Pro Agent</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('assistant', this)">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span>Prompt Chat</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('library', this)">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <span>Assets</span>
+      </button>
+    </nav>
+
+    <!-- Main View -->
+    <main class="main-view">
+
+      <!-- TAB 1: MULTIMODAL AI STUDIO -->
+      <section id="tab-studio" class="tab-pane active">
+        <div class="section-head">
+          <div>
+            <h1 class="section-title">P4 AI Multimodal Studio</h1>
+            <p class="section-sub">Generate cinema-grade video, high-res visuals, neural voiceovers, and multi-track music from your phone.</p>
+          </div>
+        </div>
+
+        <!-- Media Switcher -->
+        <div class="media-switcher">
+          <button class="media-btn active" id="modeBtn-video" onclick="setStudioMode('video')">🎬 Video</button>
+          <button class="media-btn" id="modeBtn-image" onclick="setStudioMode('image')">🖼️ Image</button>
+          <button class="media-btn" id="modeBtn-audio" onclick="setStudioMode('audio')">🎙️ Voice</button>
+          <button class="media-btn" id="modeBtn-music" onclick="setStudioMode('music')">🎵 Music</button>
+        </div>
+
+        <div class="studio-grid">
+          <!-- Left: Controls Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title" id="studioControlTitle">🎬 Video Generation Parameters</div>
+              <button class="link-action" onclick="openAssistantForCurrentMode()">✨ Ask Assistant to Write Prompt</button>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label">
+                <span id="promptLabelText">Scene & Motion Prompt</span>
+                <button class="link-action" onclick="enhanceCurrentPrompt()">⚡ Magic Enhance</button>
+              </div>
+              <textarea id="studioPrompt" placeholder="Describe your scene, camera movement, lighting, or sound...">Cinematic drone shot gliding through a neon-lit cyberpunk night market in Tokyo during light rain, volumetric fog, anamorphic lens flare, 4K 60fps photorealistic.</textarea>
+            </div>
+
+            <!-- Dynamic Presets -->
+            <div class="form-group">
+              <div class="form-label"><span>Style & Preset Tags</span></div>
+              <div class="chip-row" id="presetChipContainer"></div>
+            </div>
+
+            <!-- Dynamic Parameter Selects -->
+            <div class="param-grid">
+              <div>
+                <div class="form-label"><span id="param1Label">Aspect Ratio</span></div>
+                <select id="param1Select">
+                  <option value="16:9">16:9 Widescreen</option>
+                  <option value="9:16">9:16 Mobile Reel</option>
+                  <option value="1:1">1:1 Square</option>
+                </select>
+              </div>
+              <div>
+                <div class="form-label"><span id="param2Label">Camera / Engine</span></div>
+                <select id="param2Select">
+                  <option value="Orbit & Dolly In">Orbit & Dolly In</option>
+                  <option value="FPV Drone Sweep">FPV Drone Sweep</option>
+                  <option value="Slow Motion Pan">Slow Motion Pan</option>
+                  <option value="Static Tripod">Static Tripod</option>
+                </select>
+              </div>
+            </div>
+
+            <button class="btn-primary" id="generateBtn" onclick="triggerStudioGeneration()">
+              <span>⚡ Generate Video Asset (15 Cr)</span>
+            </button>
+          </div>
+
+          <!-- Right: Live Preview Stage -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Live Output Preview</div>
+              <span class="tag" id="previewStatusBadge">Ready • P4 Studio Engine</span>
+            </div>
+
+            <div class="preview-stage">
+              <canvas id="studioCanvas" width="640" height="360"></canvas>
+              <div class="stage-overlay">
+                <span id="stageMetaLabel">Mode: VIDEO • 16:9 • 60 FPS</span>
+                <span id="stageTimer">00:00 / 00:06</span>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center;">
+              <div style="display:flex; gap:8px;">
+                <button class="btn-secondary" id="playPauseBtn" onclick="togglePreviewPlayback()">▶️ Play / Pause</button>
+                <button class="btn-secondary" id="audioToggleBtn" onclick="playSynthesizedAudio()" style="display:none;">🔊 Play Audio Track</button>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn-secondary" onclick="downloadCurrentAsset()">⬇️ Export Asset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: PRO SCRIPT-TO-PRODUCTION AUTONOMOUS AGENT -->
+      <section id="tab-agent" class="tab-pane">
+        <div class="section-head">
+          <div>
+            <h1 class="section-title">P4 Autonomous Script-to-Production Agent</h1>
+            <p class="section-sub">Paste your raw script or commercial brief. The P4 Pro Agent parses scenes, writes camera prompts, synthesizes voiceovers & music cues, and builds a playable storyboard automatically.</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-header">
+            <div class="card-title">📜 Input Script & Creative Direction</div>
+            <div class="chip-row">
+              <button class="chip" onclick="loadSampleScript('commercial')">Sample: Futuristic Watch Ad</button>
+              <button class="chip" onclick="loadSampleScript('scifi')">Sample: Sci-Fi Film Trailer</button>
+              <button class="chip" onclick="loadSampleScript('reel')">Sample: Founder Viral Reel</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <textarea id="agentScriptInput" style="min-height:120px;">[SCENE 1] Midnight over a futuristic skyline. Rain falls on a sleek titanium smartwatch resting on volcanic rock.
+NARRATOR: Time doesn't wait for permission. It moves with precision.
+
+[SCENE 2] Macro close-up of sapphire glass illuminating with holographic biometric rings as a runner sprints through a neon tunnel.
+NARRATOR: Engineered for creators who build the future from the palm of their hand.
+
+[SCENE 3] Hero product reveal floating above a glowing horizon at sunrise with epic orchestral synth crescendo.
+NARRATOR: P4 AI Studio. Own every second.</textarea>
+          </div>
+
+          <div class="param-grid">
+            <div>
+              <div class="form-label"><span>Visual Direction Style</span></div>
+              <select id="agentVisualStyle">
+                <option value="Cinematic Anamorphic 4K">Cinematic Anamorphic 4K</option>
+                <option value="Dark Cyberpunk Neon">Dark Cyberpunk Neon</option>
+                <option value="Clean Apple-Style Studio">Clean Studio Commercial</option>
+                <option value="Anime Feature Film">Anime Feature Film</option>
+              </select>
+            </div>
+            <div>
+              <div class="form-label"><span>Soundtrack & Voice Profile</span></div>
+              <select id="agentAudioStyle">
+                <option value="Deep Trailer Voice + Synthwave">Deep Trailer Voice + Synthwave</option>
+                <option value="Warm Narrator + Ambient Orchestral">Warm Narrator + Ambient Orchestral</option>
+                <option value="Energetic Creator + Upbeat Electronic">Energetic Creator + Upbeat Electronic</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="runAgentBtn" onclick="runAutonomousAgent()">
+            <span>🚀 Launch Autonomous Pro Agent (40 Cr)</span>
+          </button>
+        </div>
+
+        <!-- Agent Execution Pipeline Status -->
+        <div class="agent-pipeline-steps" id="agentStepsGrid">
+          <div class="step-card" id="step-1">
+            <span class="step-status" id="step-1-status">Idle</span>
+            <strong>1. Script Parser</strong>
+            <span style="color:var(--text-muted); font-size:0.73rem;">Scene & dialogue extraction</span>
+          </div>
+          <div class="step-card" id="step-2">
+            <span class="step-status" id="step-2-status">Idle</span>
+            <strong>2. Prompt Architect</strong>
+            <span style="color:var(--text-muted); font-size:0.73rem;">Camera, lens & lighting specs</span>
+          </div>
+          <div class="step-card" id="step-3">
+            <span class="step-status" id="step-3-status">Idle</span>
+            <strong>3. Multimodal Synth</strong>
+            <span style="color:var(--text-muted); font-size:0.73rem;">Video, Voice & Music cues</span>
+          </div>
+          <div class="step-card" id="step-4">
+            <span class="step-status" id="step-4-status">Idle</span>
+            <strong>4. Master Timeline</strong>
+            <span style="color:var(--text-muted); font-size:0.73rem;">Playable multi-scene cut</span>
+          </div>
+        </div>
+
+        <!-- Generated Storyboard & Master Player -->
+        <div class="card" id="agentOutputCard" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">🎬 P4 Agent Production Board (<span id="sceneCountBadge">0</span> Scenes Ready)</div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-secondary" onclick="playAllAgentScenes()">▶️ Play Full Sequence with Audio</button>
+            </div>
+          </div>
+          <div class="scene-list" id="agentSceneList"></div>
+        </div>
+      </section>
+
+      <!-- TAB 3: AI PROMPT ENGINEER ASSISTANT -->
+      <section id="tab-assistant" class="tab-pane">
+        <div class="section-head">
+          <div>
+            <h1 class="section-title">P4 AI Prompt Engineer Assistant</h1>
+            <p class="section-sub">Chat with your built-in creative co-pilot to turn simple ideas into master prompts for Video, Image, Voice, or Music.</p>
+          </div>
+        </div>
+
+        <div class="card chat-container">
+          <div class="chip-row" style="margin-bottom:10px;">
+            <button class="chip" onclick="sendQuickIdea('Write a viral 9:16 vertical video prompt for a luxury coffee brand')">☕ Luxury Coffee Reel</button>
+            <button class="chip" onclick="sendQuickIdea('Create an epic cyberpunk synthwave music prompt at 124 BPM')">🎵 Synthwave Track Prompt</button>
+            <button class="chip" onclick="sendQuickIdea('Write a 3-scene YouTube intro script for an AI SaaS founder')">🎬 3-Scene SaaS Script</button>
+          </div>
+
+          <div class="chat-messages" id="chatMessages">
+            <div class="msg ai">
+              <strong>P4 AI Co-Pilot:</strong> Tell me what you want to create—even a rough 5-word idea—and I'll craft a production-ready Video, Image, Audio, Music, or Agent Script prompt that you can send straight to P4 AI Studio with one tap.
+            </div>
+          </div>
+
+          <div class="chat-input-bar">
+            <select id="assistantTargetType" style="width:130px; flex-shrink:0;">
+              <option value="video">🎬 Video</option>
+              <option value="image">🖼️ Image</option>
+              <option value="audio">🎙️ Voice</option>
+              <option value="music">🎵 Music</option>
+              <option value="script">📜 Full Script</option>
+            </select>
+            <input type="text" id="chatInput" placeholder="Describe your rough idea (e.g., neon sports car in rain)..." onkeydown="if(event.key==='Enter') sendChatMessage()" />
+            <button class="btn-primary" style="width:auto; padding:0 18px;" onclick="sendChatMessage()">Send</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: GENERATED ASSETS LIBRARY -->
+      <section id="tab-library" class="tab-pane">
+        <div class="section-head">
+          <div>
+            <h1 class="section-title">P4 Project Asset Library</h1>
+            <p class="section-sub">Every video, image, voiceover, music track, and agent storyboard generated during your session.</p>
+          </div>
+        </div>
+        <div class="history-grid" id="assetLibraryGrid"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- API Keys & Cloud Configuration Modal -->
+  <div class="modal-backdrop" id="apiModal">
+    <div class="modal-content">
+      <div class="card-header">
+        <div class="card-title">🔑 P4 AI Studio Cloud API Connector</div>
+        <button class="btn-secondary" onclick="toggleApiModal(false)">✕ Close</button>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">
+        P4 AI Studio runs out-of-the-box with its built-in WebGL/Canvas & WebAudio synthesis engine. To connect live cloud models from your phone, paste your API keys below (stored locally in your browser):
+      </p>
+      <div class="form-group">
+        <div class="form-label"><span>LLM / Prompt Assistant Key (Gemini / OpenAI)</span></div>
+        <input type="password" id="apiKeyLlm" placeholder="AIzaSy... or sk-..." />
+      </div>
+      <div class="form-group">
+        <div class="form-label"><span>Video & Image Inference Key (Fal.ai / Replicate)</span></div>
+        <input type="password" id="apiKeyMedia" placeholder="fal_... or r8_..." />
+      </div>
+      <div class="form-group">
+        <div class="form-label"><span>Voice & Music Key (ElevenLabs / Suno Proxy)</span></div>
+        <input type="password" id="apiKeyAudio" placeholder="xi-api-key..." />
+      </div>
+      <button class="btn-primary" onclick="saveApiConfig()">Save Configuration</button>
+    </div>
+  </div>
+
+  <script>
+    // --- APPLICATION STATE ---
+    let currentMode = 'video';
+    let credits = 2450;
+    let isPlaying = true;
+    let animFrameId = null;
+    let tick = 0;
+    let currentGeneratedSeed = 42;
+    let audioCtx = null;
+    let activePreset = 'Cyberpunk 4K';
+    let savedAssets = [
+      { id: 1, type: 'video', title: 'Neon Night Market Drone Shot', meta: '16:9 • 4K • 60fps', prompt: 'Cinematic drone shot gliding through a neon-lit cyberpunk night market in Tokyo during light rain, volumetric fog, anamorphic lens flare.' },
+      { id: 2, type: 'music', title: 'Midnight Horizon Synthwave', meta: '122 BPM • Minor Key', prompt: 'Driving analog synthwave arpeggio with deep sub-bass and crisp gated snare.' }
+    ];
+
+    const modeConfigs = {
+      video: {
+        title: '🎬 Video Generation Parameters',
+        promptLabel: 'Scene & Motion Prompt',
+        defaultPrompt: 'Cinematic drone shot gliding through a neon-lit cyberpunk night market in Tokyo during light rain, volumetric fog, anamorphic lens flare, 4K 60fps photorealistic.',
+        presets: ['Cyberpunk 4K', 'Anamorphic Film', '3D Pixar Style', 'FPV Drone Action', 'Luxury Commercial'],
+        param1Label: 'Aspect Ratio',
+        param1Options: ['16:9 Widescreen', '9:16 Mobile Reel', '1:1 Square'],
+        param2Label: 'Camera Motion',
+        param2Options: ['Orbit & Dolly In', 'FPV Drone Sweep', 'Slow Motion Pan', 'Handheld Documentary'],
+        cost: 15,
+        btnLabel: '⚡ Generate Video Asset (15 Cr)'
+      },
+      image: {
+        title: '🖼️ High-Res Image Studio',
+        promptLabel: 'Visual Composition Prompt',
+        defaultPrompt: 'Ultra-detailed editorial product photography of a translucent matte-black AI wearable pin floating over obsidian stone, rim lighting, 85mm f/1.4 lens, octane render.',
+        presets: ['Editorial Studio', 'Dark Sci-Fi Concept', 'Hyperreal Portrait', 'Isometric 3D Icon', 'Anime Key Visual'],
+        param1Label: 'Resolution & Ratio',
+        param1Options: ['16:9 Landscape HD', '9:16 Vertical Story', '1:1 Square Poster'],
+        param2Label: 'Lighting & Lens',
+        param2Options: ['85mm f/1.4 Rim Light', '35mm Cinematic Neon', 'Macro Studio Softbox', 'Golden Hour Volumetric'],
+        cost: 5,
+        btnLabel: '⚡ Generate HD Image (5 Cr)'
+      },
+      audio: {
+        title: '🎙️ Neural Voice & SFX Studio',
+        promptLabel: 'Voiceover Script or SFX Prompt',
+        defaultPrompt: 'Welcome to P4 AI Studio. Build, direct, and launch cinema-grade media straight from your phone.',
+        presets: ['Deep Movie Trailer', 'Warm Documentary', 'Energetic Founder', 'Calm AI Assistant', 'Cinematic Whoosh SFX'],
+        param1Label: 'Voice Persona',
+        param1Options: ['Orion (Deep Trailer)', 'Nova (Warm Conversational)', 'Atlas (Crisp Narrator)', 'Pulse (Cinematic SFX)'],
+        param2Label: 'Pacing & Emotion',
+        param2Options: ['1.0x Natural Studio', '1.15x Energetic Reel', '0.9x Dramatic Slow', 'Whispered Suspense'],
+        cost: 8,
+        btnLabel: '⚡ Synthesize Voiceover (8 Cr)'
+      },
+      music: {
+        title: '🎵 AI Multi-Track Music Generator',
+        promptLabel: 'Musical Style, Instruments & Mood',
+        defaultPrompt: 'Atmospheric synthwave & lo-fi electronic beat, warm analog pads, punchy kick drum, uplifting chord progression at 118 BPM.',
+        presets: ['Synthwave Odyssey', 'Lo-Fi Study Beats', 'Epic Hans-Style Cinematic', 'Upbeat Tech House', 'Ambient Chillscape'],
+        param1Label: 'Tempo & Groove',
+        param1Options: ['118 BPM Driving', '90 BPM Lo-Fi Chill', '128 BPM Festival Club', '75 BPM Cinematic Slow'],
+        param2Label: 'Key & Mastering',
+        param2Options: ['A Minor (Dolby Wide)', 'C Major (Warm Analog)', 'D Minor (Dark Club)', 'F# Minor (Ethereal)'],
+        cost: 12,
+        btnLabel: '⚡ Compose Music Track (12 Cr)'
+      }
+    };
+
+    // --- NAVIGATION & MODE SWITCHING ---
+    function switchTab(tabId, btnEl) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      if (btnEl) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      if (tabId === 'library') renderAssetLibrary();
+    }
+
+    function setStudioMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.media-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('modeBtn-' + mode).classList.add('active');
+
+      const cfg = modeConfigs[mode];
+      document.getElementById('studioControlTitle').textContent = cfg.title;
+      document.getElementById('promptLabelText').textContent = cfg.promptLabel;
+      document.getElementById('studioPrompt').value = cfg.defaultPrompt;
+      document.getElementById('param1Label').textContent = cfg.param1Label;
+      document.getElementById('param2Label').textContent = cfg.param2Label;
+
+      const p1 = document.getElementById('param1Select');
+      p1.innerHTML = cfg.param1Options.map(o => `<option value="${o}">${o}</option>`).join('');
+
+      const p2 = document.getElementById('param2Select');
+      p2.innerHTML = cfg.param2Options.map(o => `<option value="${o}">${o}</option>`).join('');
+
+      const chipWrap = document.getElementById('presetChipContainer');
+      activePreset = cfg.presets[0];
+      chipWrap.innerHTML = cfg.presets.map((p, idx) =>
+        `<button class="chip ${idx===0?'active':''}" onclick="selectPresetChip(this, '${p}')">${p}</button>`
+      ).join('');
+
+      document.getElementById('generateBtn').innerHTML = `<span>${cfg.btnLabel}</span>`;
+      document.getElementById('stageMetaLabel').textContent = `Mode: ${mode.toUpperCase()} • ${cfg.param1Options[0]}`;
+
+      const audioBtn = document.getElementById('audioToggleBtn');
+      audioBtn.style.display = (mode === 'audio' || mode === 'music') ? 'inline-flex' : 'none';
+    }
+
+    function selectPresetChip(el, presetName) {
+      activePreset = presetName;
+      el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function enhanceCurrentPrompt() {
+      const box = document.getElementById('studioPrompt');
+      const base = box.value.trim() || 'Futuristic scene';
+      const enhancers = {
+        video: ', shot on ARRI Alexa 65, anamorphic lens flare, volumetric atmospheric lighting, fluid gimbal motion, ultra-detailed 8K master.',
+        image: ', award-winning studio photography, dramatic rim lighting, octane render, raytraced reflections, sharp focus, 8K.',
+        audio: ' [Studio condenser mic, crystal-clear vocal presence, warm broadcast mastering].',
+        music: ', studio mastered stereo separation, analog tape warmth, deep sub-bass foundation, dynamic arrangement.'
+      };
+      if (!base.includes('ARRI') && !base.includes('octane') && !base.includes('condenser') && !base.includes('mastered')) {
+        box.value = base + enhancers[currentMode];
+      }
+    }
+
+    function updateCredits(delta) {
+      credits = Math.max(0, credits + delta);
+      document.getElementById('creditCount').textContent = credits.toLocaleString();
+    }
+
+    // --- STUDIO GENERATION & PROCEDURAL CANVAS / WEBAUDIO ENGINE ---
+    function triggerStudioGeneration() {
+      const cfg = modeConfigs[currentMode];
+      const btn = document.getElementById('generateBtn');
+      const badge = document.getElementById('previewStatusBadge');
+      const prompt = document.getElementById('studioPrompt').value.trim();
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳ Synthesizing ${currentMode.toUpperCase()}...</span>`;
+      badge.textContent = 'Synthesizing Neural Latents...';
+
+      setTimeout(() => {
+        currentGeneratedSeed = Math.floor(Math.random() * 10000);
+        updateCredits(-cfg.cost);
+        btn.disabled = false;
+        btn.innerHTML = `<span>${cfg.btnLabel}</span>`;
+        badge.textContent = `Generated • Seed #${currentGeneratedSeed}`;
+
+        const p1 = document.getElementById('param1Select').value;
+        document.getElementById('stageMetaLabel').textContent = `Mode: ${currentMode.toUpperCase()} • ${p1} • ${activePreset}`;
+
+        savedAssets.unshift({
+          id: Date.now(),
+          type: currentMode,
+          title: prompt.slice(0, 42) + (prompt.length > 42 ? '...' : ''),
+          meta: `${p1} • ${activePreset}`,
+          prompt: prompt
+        });
+
+        if (currentMode === 'audio' || currentMode === 'music') {
+          playSynthesizedAudio();
+        }
+      }, 750);
+    }
+
+    function initCanvasLoop() {
+      const canvas = document.getElementById('studioCanvas');
+      const ctx = canvas.getContext('2d');
+
+      function render() {
+        if (isPlaying) tick += 1;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Background gradient shifts by seed & mode
+        const hue1 = (currentGeneratedSeed * 17 + tick * 0.4) % 360;
+        const hue2 = (hue1 + 75) % 360;
+        const grad = ctx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, `hsl(${hue1}, 65%, 10%)`);
+        grad.addColorStop(0.5, `hsl(${hue2}, 70%, 16%)`);
+        grad.addColorStop(1, '#05070b');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        if (currentMode === 'video' || currentMode === 'image') {
+          const t = currentMode === 'image' ? currentGeneratedSeed : tick * 0.03;
+
+          // Perspective grid
+          ctx.strokeStyle = `hsla(${hue2}, 85%, 60%, 0.22)`;
+          ctx.lineWidth = 1;
+          const horizon = h * 0.58;
+          for (let i = -10; i <= 10; i++) {
+            ctx.beginPath();
+            ctx.moveTo(w / 2 + i * 18, horizon);
+            ctx.lineTo(w / 2 + i * 110, h);
+            ctx.stroke();
+          }
+          for (let y = horizon; y < h; y += 22) {
+            const offset = (y + (t * 25) % 22);
+            ctx.beginPath();
+            ctx.moveTo(0, offset);
+            ctx.lineTo(w, offset);
+            ctx.stroke();
+          }
+
+          // Glowing orb / subject
+          const orbX = w / 2 + Math.sin(t) * 65;
+          const orbY = h * 0.42 + Math.cos(t * 0.7) * 18;
+          const rad = ctx.createRadialGradient(orbX, orbY, 6, orbX, orbY, 95);
+          rad.addColorStop(0, '#ffffff');
+          rad.addColorStop(0.3, `hsla(${hue1}, 95%, 65%, 0.85)`);
+          rad.addColorStop(1, 'transparent');
+          ctx.fillStyle = rad;
+          ctx.beginPath();
+          ctx.arc(orbX, orbY, 95, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Floating particles
+          for (let p = 0; p < 18; p++) {
+            const px = ((p * 97 + t * 40) % w);
+            const py = ((p * 53 + Math.sin(t + p) * 30) % h);
+            ctx.fillStyle = `hsla(${(hue1 + p * 12) % 360}, 90%, 75%, 0.65)`;
+            ctx.beginPath();
+            ctx.arc(px, py, (p % 3) + 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else {
+          // Audio / Music Waveform Visualizer
+          const bars = 48;
+          const barW = (w - 80) / bars;
+          for (let i = 0; i < bars; i++) {
+            const amp = Math.abs(Math.sin(tick * 0.08 + i * 0.35) * Math.cos(i * 0.15 + currentGeneratedSeed));
+            const barH = 16 + amp * (h * 0.55);
+            const x = 40 + i * barW;
+            const y = (h - barH) / 2;
+            ctx.fillStyle = `hsl(${(hue1 + i * 3) % 360}, 85%, 62%)`;
+            ctx.fillRect(x, y, barW - 3, barH);
+          }
+        }
+
+        // Caption overlay inside canvas
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(16, 16, 260, 28);
+        ctx.fillStyle = '#e5e7eb';
+        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(`P4 AI Studio ${currentMode.toUpperCase()} • ${activePreset}`, 26, 34);
+
+        const sec = Math.floor((tick / 60) % 6);
+        document.getElementById('stageTimer').textContent = `00:0${sec} / 00:06`;
+
+        animFrameId = requestAnimationFrame(render);
+      }
+      render();
+    }
+
+    function togglePreviewPlayback() {
+      isPlaying = !isPlaying;
+    }
+
+    // --- WEB AUDIO SYNTHESIZER FOR REAL VOICE & MUSIC PLAYBACK ---
+    function playSynthesizedAudio() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        if (currentMode === 'audio' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(document.getElementById('studioPrompt').value);
+          utter.rate = 1.02;
+          utter.pitch = 0.95;
+          window.speechSynthesis.speak(utter);
+        }
+
+        // Play procedural synth chord progression
+        const now = audioCtx.currentTime;
+        const notes = currentMode === 'music' ? [220, 261.63, 329.63, 392.00, 440, 523.25] : [196, 293.66, 392];
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = currentMode === 'music' ? 'sawtooth' : 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.22);
+
+          gain.gain.setValueAtTime(0.001, now + idx * 0.22);
+          gain.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.22 + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.22 + 0.65);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.22);
+          osc.stop(now + idx * 0.22 + 0.7);
+        });
+      } catch (e) {
+        console.log('Audio playback ready on user interaction.');
+      }
+    }
+
+    function downloadCurrentAsset() {
+      const canvas = document.getElementById('studioCanvas');
+      const link = document.createElement('a');
+      link.download = `p4_ai_studio_${currentMode}_${currentGeneratedSeed}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // --- AI PROMPT ENGINEER CHAT ASSISTANT ---
+    function openAssistantForCurrentMode() {
+      document.getElementById('assistantTargetType').value = currentMode;
+      const navBtns = document.querySelectorAll('.nav-item');
+      switchTab('assistant', navBtns[2]);
+      document.getElementById('chatInput').focus();
+    }
+
+    function sendQuickIdea(text) {
+      document.getElementById('chatInput').value = text;
+      sendChatMessage();
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const raw = input.value.trim();
+      if (!raw) return;
+
+      const targetType = document.getElementById('assistantTargetType').value;
+      const chatBox = document.getElementById('chatMessages');
+
+      // Append user message
+      const userDiv = document.createElement('div');
+      userDiv.className = 'msg user';
+      userDiv.textContent = raw;
+      chatBox.appendChild(userDiv);
+      input.value = '';
+
+      // Build structured prompt based on target medium
+      let craftedPrompt = '';
+      if (targetType === 'video') {
+        craftedPrompt = `Cinematic ${raw}, smooth gimbal tracking shot, volumetric neon & golden-hour rim lighting, shallow depth of field (35mm anamorphic lens), photorealistic textures, 4K 60fps high dynamic range.`;
+      } else if (targetType === 'image') {
+        craftedPrompt = `Editorial master shot of ${raw}, dramatic studio lighting, raytraced reflections, ultra-crisp 85mm f/1.4 prime lens, Unreal Engine 5 & Octane Render fidelity, 8K resolution.`;
+      } else if (targetType === 'audio') {
+        craftedPrompt = `[Warm, authoritative studio voiceover]: "${raw} — engineered for creators who demand precision and speed."`;
+      } else if (targetType === 'music') {
+        craftedPrompt = `${raw} — 122 BPM, lush analog synth pads, driving sub-bass groove, crisp percussion, wide stereo mastering.`;
+      } else {
+        craftedPrompt = `[SCENE 1] Establishing wide shot: ${raw} under dramatic lighting.\nNARRATOR: Every breakthrough starts with a single bold vision.\n\n[SCENE 2] Dynamic close-up showing intricate motion and energy.\nNARRATOR: Built to perform at the speed of imagination.\n\n[SCENE 3] Hero finale reveal with uplifting musical crescendo.\nNARRATOR: Start creating with P4 AI Studio today.`;
+      }
+
+      setTimeout(() => {
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'msg ai';
+        const escaped = craftedPrompt.replace(/'/g, "\'").replace(/\n/g, "\\n");
+        aiDiv.innerHTML = `
+          <strong>P4 AI Co-Pilot (${targetType.toUpperCase()} Specialist):</strong>
+          Here is your optimized production prompt with camera, lighting, and acoustic structure:
+          <div class="prompt-box-result">${craftedPrompt.replace(/\n/g, '<br>')}</div>
+          <div class="prompt-box-actions">
+            <button class="btn-secondary" onclick="applyPromptToTarget('${targetType}', '${escaped}')">🚀 Load into ${targetType === 'script' ? 'Pro Agent' : 'P4 Studio'} & Generate</button>
+          </div>
+        `;
+        chatBox.appendChild(aiDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 300);
+    }
+
+    function applyPromptToTarget(targetType, text) {
+      const navBtns = document.querySelectorAll('.nav-item');
+      if (targetType === 'script') {
+        document.getElementById('agentScriptInput').value = text;
+        switchTab('agent', navBtns[1]);
+        runAutonomousAgent();
+      } else {
+        setStudioMode(targetType);
+        document.getElementById('studioPrompt').value = text;
+        switchTab('studio', navBtns[0]);
+        triggerStudioGeneration();
+      }
+    }
+
+    // --- PRO AUTONOMOUS SCRIPT-TO-PRODUCTION AGENT ---
+    const sampleScripts = {
+      commercial: `[SCENE 1] Midnight over a futuristic skyline. Rain falls on a sleek titanium smartwatch resting on volcanic rock.\nNARRATOR: Time doesn't wait for permission. It moves with precision.\n\n[SCENE 2] Macro close-up of sapphire glass illuminating with holographic biometric rings as a runner sprints through a neon tunnel.\nNARRATOR: Engineered for creators who build the future from the palm of their hand.\n\n[SCENE 3] Hero product reveal floating above a glowing horizon at sunrise with epic orchestral synth crescendo.\nNARRATOR: P4 AI Studio. Own every second.`,
+      scifi: `[SCENE 1] Orbital space station dock overlooking a glowing blue exoplanet. A lone pilot walks toward a sleek starfighter.\nNARRATOR: Beyond the edge of mapped space lies the signal we've searched for.\n\n[SCENE 2] Cockpit HUD lights up with quantum navigation telemetry as engines ignite in brilliant cyan plasma.\nNARRATOR: Hold on tight. Jump sequence initiated.`,
+      reel: `[SCENE 1] Fast-paced POV shot of a founder building an AI SaaS app on a smartphone at a bustling rooftop cafe.\nNARRATOR: Most people think you need a massive desktop rig to launch an AI startup.\n\n[SCENE 2] Screen hologram showing live video, voice, and music generation running in real time.\nNARRATOR: With P4 AI Studio, your entire production studio fits in your pocket.`
+    };
+
+    function loadSampleScript(key) {
+      document.getElementById('agentScriptInput').value = sampleScripts[key];
+    }
+
+    let lastAgentScenes = [];
+
+    function runAutonomousAgent() {
+      const rawScript = document.getElementById('agentScriptInput').value.trim();
+      if (!rawScript) return;
+
+      const visualStyle = document.getElementById('agentVisualStyle').value;
+      const audioStyle = document.getElementById('agentAudioStyle').value;
+      const btn = document.getElementById('runAgentBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⚙️ Autonomous Agent Executing Pipeline...</span>';
+
+      // Reset step cards
+      for (let i = 1; i <= 4; i++) {
+        const c = document.getElementById(`step-${i}`);
+        c.className = 'step-card';
+        document.getElementById(`step-${i}-status`).textContent = 'Queued';
+      }
+
+      // Parse scenes
+      const blocks = rawScript.split(/\n\s*\n/).filter(Boolean);
+      const parsedScenes = blocks.map((block, idx) => {
+        const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+        let visual = lines[0].replace(/^\[SCENE\s*\d+\]\s*/i, '');
+        let narrator = 'Instrumental / Visual Action Beat';
+        lines.forEach(l => {
+          if (/^(NARRATOR|VOICEOVER|HOST|SPEAKER):/i.test(l)) {
+            narrator = l.replace(/^(NARRATOR|VOICEOVER|HOST|SPEAKER):\s*/i, '');
+          }
+        });
+        return {
+          index: idx + 1,
+          visualBrief: visual,
+          engineeredPrompt: `${visualStyle}: ${visual}, dynamic dolly camera motion, volumetric lighting, 8K anamorphic render`,
+          voiceover: narrator,
+          musicCue: `${audioStyle} • Scene ${idx + 1} Stinger`,
+          seed: (idx + 1) * 137 + Math.floor(Math.random() * 90)
+        };
+      });
+
+      lastAgentScenes = parsedScenes;
+
+      // Animate 4 pipeline steps sequentially
+      const stepDelays = [200, 700, 1300, 1900];
+      stepDelays.forEach((delay, idx) => {
+        const stepNum = idx + 1;
+        setTimeout(() => {
+          if (stepNum > 1) {
+            document.getElementById(`step-${stepNum - 1}`).className = 'step-card done';
+            document.getElementById(`step-${stepNum - 1}-status`).textContent = '✓ Completed';
+          }
+          document.getElementById(`step-${stepNum}`).className = 'step-card running';
+          document.getElementById(`step-${stepNum}-status`).textContent = 'Running...';
+        }, delay);
+      });
+
+      setTimeout(() => {
+        document.getElementById('step-4').className = 'step-card done';
+        document.getElementById('step-4-status').textContent = '✓ Completed';
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀 Launch Autonomous Pro Agent (40 Cr)</span>';
+        updateCredits(-40);
+        renderAgentStoryboard(parsedScenes);
+      }, 2400);
+    }
+
+    function renderAgentStoryboard(scenes) {
+      const card = document.getElementById('agentOutputCard');
+      const list = document.getElementById('agentSceneList');
+      document.getElementById('sceneCountBadge').textContent = scenes.length;
+      card.style.display = 'block';
+
+      list.innerHTML = scenes.map((sc, i) => `
+        <div class="scene-item">
+          <div class="scene-thumb">
+            <canvas id="agentCanvas-${i}" width="320" height="180"></canvas>
+          </div>
+          <div class="scene-meta">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="color:#fff; font-size:0.92rem;">Scene ${sc.index}: ${sc.visualBrief.slice(0, 56)}${sc.visualBrief.length > 56 ? '...' : ''}</strong>
+              <span class="tag">00:0${sc.index * 4 - 4} - 00:0${sc.index * 4}</span>
+            </div>
+            <div style="color:#a5f3fc; font-family:monospace; font-size:0.76rem; background:rgba(6,182,212,0.08); padding:6px 8px; border-radius:6px;">
+              🎥 Prompt: ${sc.engineeredPrompt}
+            </div>
+            <div style="color:var(--text-main);">🎙️ <strong>Voiceover:</strong> "${sc.voiceover}"</div>
+            <div class="tag-row">
+              <span class="tag">🎵 ${sc.musicCue}</span>
+              <button class="btn-secondary" style="padding:3px 9px; font-size:0.72rem;" onclick="previewSingleSceneVoice(${i})">🔊 Play Scene Audio</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Draw each scene thumbnail on canvas
+      scenes.forEach((sc, i) => {
+        const c = document.getElementById(`agentCanvas-${i}`);
+        if (!c) return;
+        const ctx = c.getContext('2d');
+        const h1 = (sc.seed * 29) % 360;
+        const h2 = (h1 + 60) % 360;
+        const g = ctx.createLinearGradient(0, 0, c.width, c.height);
+        g.addColorStop(0, `hsl(${h1}, 70%, 14%)`);
+        g.addColorStop(1, `hsl(${h2}, 80%, 24%)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, c.width, c.height);
+
+        // Glowing focal element
+        const rad = ctx.createRadialGradient(c.width * 0.5, c.height * 0.45, 5, c.width * 0.5, c.height * 0.45, 70);
+        rad.addColorStop(0, '#fff');
+        rad.addColorStop(0.4, `hsla(${h1}, 95%, 65%, 0.8)`);
+        rad.addColorStop(1, 'transparent');
+        ctx.fillStyle = rad;
+        ctx.beginPath();
+        ctx.arc(c.width * 0.5, c.height * 0.45, 70, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(8, c.height - 26, c.width - 16, 18);
+        ctx.fillStyle = '#fff';
+        ctx.font = '600 10px sans-serif';
+        ctx.fillText(`SCENE ${sc.index} • ${sc.voiceover.slice(0, 34)}...`, 14, c.height - 13);
+      });
+    }
+
+    function previewSingleSceneVoice(idx) {
+      const sc = lastAgentScenes[idx];
+      if (!sc) return;
+      playSynthesizedAudio();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(sc.voiceover);
+        window.speechSynthesis.speak(u);
+      }
+    }
+
+    function playAllAgentScenes() {
+      if (!lastAgentScenes.length) return;
+      playSynthesizedAudio();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const fullText = lastAgentScenes.map(s => s.voiceover).join(' ... ');
+        const u = new SpeechSynthesisUtterance(fullText);
+        window.speechSynthesis.speak(u);
+      }
+    }
+
+    // --- ASSET LIBRARY & API MODAL ---
+    function renderAssetLibrary() {
+      const grid = document.getElementById('assetLibraryGrid');
+      grid.innerHTML = savedAssets.map(a => `
+        <div class="history-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="badge-pro">${a.type.toUpperCase()}</span>
+            <span style="font-size:0.72rem; color:var(--text-muted);">${a.meta}</span>
+          </div>
+          <strong style="font-size:0.9rem;">${a.title}</strong>
+          <p style="font-size:0.78rem; color:var(--text-muted);">${a.prompt}</p>
+        </div>
+      `).join('');
+    }
+
+    function toggleApiModal(open) {
+      const m = document.getElementById('apiModal');
+      if (open) m.classList.add('open');
+      else m.classList.remove('open');
+    }
+
+    function saveApiConfig() {
+      toggleApiModal(false);
+      document.getElementById('previewStatusBadge').textContent = 'Cloud API Keys Saved • Ready';
+    }
+
+    // Initialize Studio on load
+    window.addEventListener('DOMContentLoaded', () => {
+      setStudioMode('video');
+      initCanvasLoop();
+    });
+  </script>
+</body>
+</html>
